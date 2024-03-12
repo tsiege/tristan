@@ -5,7 +5,7 @@ This is my personal and customized coding environment, originally forked from [P
 ## Installation
 
 ```bash
-curl https://raw.githubusercontent.com/TSiege/tristan/master/installer.sh -L -o - | sh
+curl https://raw.githubusercontent.com/TSiege/tristan/main/installer.sh -L -o - | sh
 ```
 
 ### Notes
