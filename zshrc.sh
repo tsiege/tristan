@@ -1,6 +1,7 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 export PATH="/opt/homebrew/bin:$PATH"
+export PATH="$PATH:/Users/tristan/flutter/bin"
 
 # Path to your oh-my-zsh installation.
 export ZSH="/Users/tristan/.oh-my-zsh"
