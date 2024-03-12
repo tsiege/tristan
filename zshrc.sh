@@ -1,9 +1,14 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 export PATH="/opt/homebrew/bin:$PATH"
+export PATH="$PATH:/Users/tristan/flutter/bin"
 
 # Path to your oh-my-zsh installation.
 export ZSH="/Users/tristan/.oh-my-zsh"
+
+export GOPATH=$HOME/go
+export PNPM_HOME="/Users/tristan/Library/pnpm"
+export PATH="$PNPM_HOME:$PATH:$GOPATH/bin"
 
 # Set name of the theme to load --- if set to "random", it will
 # load a random theme each time oh-my-zsh is loaded, in which case,
@@ -62,7 +67,9 @@ ZSH_THEME="tristan"
 # or set a custom format using the strftime function format specifications,
 # see 'man strftime' for details.
 # HIST_STAMPS="mm/dd/yyyy"
-unsetopt share_history # don't share history betwen buffers
+# don't share history betwen buffers
+unsetopt share_history
+unsetopt inc_append_history
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
@@ -101,3 +108,19 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
+
+# source local .zshrc for machine specific zshrc configs
+[[ -s "/Users/$USER/.zshrc.local" ]] && source "/Users/$USER/.zshrc.local"
+
+# pnpm
+export PNPM_HOME="/Users/tristan/Library/pnpm"
+export PATH="$PNPM_HOME:$PATH"
+# pnpm end
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# fnm
+export PATH="/Users/tristan/Library/Application Support/fnm:$PATH"
+eval "`fnm env`"
