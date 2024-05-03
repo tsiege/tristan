@@ -13,18 +13,22 @@
 #     }
 # fi
 
+color_cyan="%{$fg_no_bold[cyan]%}";  # color in PROMPT need format in %{XXX%} which is not same with echo
+color_reset="%{$reset_color%}";
+reset_font="%{$fg_no_bold[white]%}";
 
 # time
 function real_time() {
-    local color="%{$fg_no_bold[cyan]%}";                    # color in PROMPT need format in %{XXX%} which is not same with echo
     local time="[$(date +%H:%M:%S)]";
-    local color_reset="%{$reset_color%}";
-    echo "${color}${time}${color_reset}";
+    echo "${color_cyan}${time}${color_reset}";
 }
-
+TIME_CACHE=""
+function update_time() {
+    TIME_CACHE=$(real_time);
+}
+update_time
 # login_info
 function login_info() {
-    local color="%{$fg_no_bold[cyan]%}";                    # color in PROMPT need format in %{XXX%} which is not same with echo
     local ip
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
         # Linux
@@ -43,19 +47,21 @@ function login_info() {
     else
         # Unknown.
     fi
-    local color_reset="%{$reset_color%}";
-    echo "${color}[%n@${ip}]${color_reset}";
+    echo "${color_cyan}[%n@${ip}]${color_reset}";
 }
 
 
 # directory
 function directory() {
-    local color="%{$fg_no_bold[cyan]%}";
     # REF: https://stackoverflow.com/questions/25944006/bash-current-working-directory-with-replacing-path-to-home-folder
     local directory="${PWD/#$HOME/~}";
-    local color_reset="%{$reset_color%}";
-    echo "${color}[${directory}]${color_reset}";
+    echo "${color_cyan}[${directory}]${color_reset}";
 }
+DIRECTORY=""
+function update_directory() {
+    DIRECTORY=$(directory);
+}
+update_directory
 
 
 # git
@@ -67,7 +73,7 @@ ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_no_bold[blue]%}) 🌟";
 function update_git_status() {
     GIT_STATUS=$(git_prompt_info);
 }
-
+update_git_status
 function git_status() {
     echo "${GIT_STATUS}"
 }
@@ -75,18 +81,14 @@ function git_status() {
 
 # command
 function update_command_status() {
-    local arrow="";
-    local color_reset="%{$reset_color%}";
-    local reset_font="%{$fg_no_bold[white]%}";
     COMMAND_RESULT=$1;
     export COMMAND_RESULT=$COMMAND_RESULT
     if $COMMAND_RESULT;
     then
-        arrow="%{$fg_bold[red]%}❱%{$fg_bold[yellow]%}❱%{$fg_bold[green]%}❱";
+        COMMAND_STATUS="%{$fg_bold[red]%}❱%{$fg_bold[yellow]%}❱%{$fg_bold[green]%}❱${reset_font}${color_reset}";
     else
-        arrow="%{$fg_bold[red]%}❱❱❱";
+        COMMAND_STATUS="%{$fg_bold[red]%}❱❱❱${reset_font}${color_reset}";
     fi
-    COMMAND_STATUS="${arrow}${reset_font}${color_reset}";
 }
 update_command_status true;
 
@@ -137,56 +139,19 @@ function command_status() {
 # }
 
 
-# command execute before
+# command run before execute
 # REF: http://zsh.sourceforge.net/Doc/Release/Functions.html
 # preexec() {
-#     COMMAND_TIME_BEIGIN="$(current_time_millis)";
 # }
 
-# current_time_millis() {
-#     local time_millis;
-#     if [[ "$OSTYPE" == "linux-gnu" ]]; then
-#         # Linux
-#         time_millis="$(date +%s.%3N)";
-#     elif [[ "$OSTYPE" == "darwin"* ]]; then
-#         # macOS
-#         time_millis="$(gdate +%s.%3N)";
-#     elif [[ "$OSTYPE" == "cygwin" ]]; then
-#         # POSIX compatibility layer and Linux environment emulation for Windows
-#     elif [[ "$OSTYPE" == "msys" ]]; then
-#         # Lightweight shell and GNU utilities compiled for Windows (part of MinGW)
-#     elif [[ "$OSTYPE" == "win32" ]]; then
-#         # I'm not sure this can happen.
-#     elif [[ "$OSTYPE" == "freebsd"* ]]; then
-#         # ...
-#     else
-#         # Unknown.
-#     fi
-#     echo $time_millis;
-# }
-
-
-# command execute after
+# command run after execute and before printing a new prompt
 # REF: http://zsh.sourceforge.net/Doc/Release/Functions.html
 precmd() {
-    # last_cmd
-    # local last_cmd_return_code=$?;
-    # local last_cmd_result=true;
-    # if [ "$last_cmd_return_code" = "0" ];
-    # then
-    #     last_cmd_result=true;
-    # else
-    #     last_cmd_result=false;
-    # fi
-
-    # update_git_status
+    update_command_status;
+    update_directory;
     update_git_status;
-
-    # # update_command_status
-    # update_command_status $last_cmd_result;
-
-    # # output command execute after
-    # output_command_execute_after $last_cmd_result;
+    update_time;
+    update_prompt;
 }
 
 
@@ -194,24 +159,26 @@ precmd() {
 setopt PROMPT_SUBST;
 
 
-# timer
-#REF: https://stackoverflow.com/questions/26526175/zsh-menu-completion-causes-problems-after-zle-reset-prompt
-TMOUT=1;
-TRAPALRM() {
-    # $(git_prompt_info) cost too much time which will raise stutters when inputting. so we need to disable it in this occurence.
-    # if [ "$WIDGET" != "expand-or-complete" ] && [ "$WIDGET" != "self-insert" ] && [ "$WIDGET" != "backward-delete-char" ]; then
-    # black list will not enum it completely. even some pipe broken will appear.
-    # so we just put a white list here.
-    if [ "$WIDGET" = "" ] || [ "$WIDGET" = "accept-line" ] ; then
-        zle reset-prompt;
-    fi
-}
+# # timer
+# #REF: https://stackoverflow.com/questions/26526175/zsh-menu-completion-causes-problems-after-zle-reset-prompt
+# TMOUT=1;
+# TRAPALRM() {
+#     # $(git_prompt_info) cost too much time which will raise stutters when inputting. so we need to disable it in this occurence.
+#     # if [ "$WIDGET" != "expand-or-complete" ] && [ "$WIDGET" != "self-insert" ] && [ "$WIDGET" != "backward-delete-char" ]; then
+#     # black list will not enum it completely. even some pipe broken will appear.
+#     # so we just put a white list here.
+#     if [ "$WIDGET" = "" ] || [ "$WIDGET" = "accept-line" ] ; then
+#         zle reset-prompt;
+#     fi
+# }
 
 
 # prompt
 headline_output() {
-  echo "$(real_time) $(directory) $(git_status)"
-  echo "⏣ ⌬ $(command_status) "
+  echo -e "$TIME_CACHE $DIRECTORY $GIT_STATUS\n⏣ ⌬ $COMMAND_STATUS "
 }
-# PROMPT='$(real_time) $(login_info) $(directory) $(git_status)$(command_status) ';
-PROMPT='$(headline_output)';
+function update_prompt() {
+    PROMPT="$(headline_output)";
+}
+update_prompt
+
