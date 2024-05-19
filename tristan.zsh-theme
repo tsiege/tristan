@@ -63,21 +63,21 @@ function update_directory() {
 }
 update_directory
 
-
 # git
-ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg_no_bold[blue]%}git(%{$fg_no_bold[red]%}";
-ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%} ";
-ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg_no_bold[blue]%}) 🔥";
-ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_no_bold[blue]%}) 🌟";
-
+function git_dirty_status() {
+    [[ $(git status 2> /dev/null | tail -n1) == "nothing to commit, working tree clean" ]] && echo "🌟"
+    [[ $(git status 2> /dev/null | tail -n1) != "nothing to commit, working tree clean" ]] && echo "🔥"
+}
+function git_branch_name() {
+    git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/\1/"
+}
+function git_status() {
+    echo "$fg_no_bold[blue]git($fg_no_bold[red]$(git_branch_name) $(git_dirty_status)$fg_no_bold[blue])"
+}
 function update_git_status() {
-    GIT_STATUS=$(git_prompt_info);
+    GIT_STATUS=$(git_status);
 }
 update_git_status
-function git_status() {
-    echo "${GIT_STATUS}"
-}
-
 
 # command
 function update_command_status() {
