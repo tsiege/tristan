@@ -72,7 +72,11 @@ function git_branch_name() {
     git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/\1/"
 }
 function git_status() {
-    echo "$fg_no_bold[blue]git($fg_no_bold[red]$(git_branch_name) $(git_dirty_status)$fg_no_bold[blue])"
+    if [ -d ".git" ]; then
+        echo "$fg_no_bold[blue]git($fg_no_bold[red]$(git_branch_name) $(git_dirty_status)$fg_no_bold[blue])"
+    else
+        echo ""
+    fi
 }
 function update_git_status() {
     GIT_STATUS=$(git_status);
