@@ -16,6 +16,7 @@
   # remove merged local branches
   rml = "!git branch --merged main | grep -v main | xargs -n 1 git branch -d"
   st = status
+  pl="!git pull origin $(git rev-parse --abbrev-ref HEAD)"
 [push]
   default = current
   followTags = true
