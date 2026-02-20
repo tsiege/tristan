@@ -129,3 +129,19 @@ export AWS_SESSION_TOKEN=\"${AWS_SESSION_TOKEN}\"
 function gcom () {
   git show-ref --verify --quiet refs/heads/main && git co main || git co master
 }
+
+function git_remove_merged_branches() {
+  local protected_branches="^(main|master|dev|develop|development|staging|prod|production)$"
+
+  for branch in $(git branch --format='%(refname:short)'); do
+    # Skip protected branches
+    if echo "$branch" | grep -qE "$protected_branches"; then
+      continue
+    fi
+
+    # Check if branch has a merged PR
+    if gh pr list --state merged --head "$branch" --json number --jq '.[0].number' 2>/dev/null | grep -q .; then
+      git branch -D "$branch"
+    fi
+  done
+}

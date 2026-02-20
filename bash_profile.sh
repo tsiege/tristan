@@ -3,6 +3,7 @@ source ~/.tristan/shell_scripts/functions.sh
 source ~/.tristan/shell_scripts/aliases.sh
 source ~/.tristan/shell_scripts/completion.sh
 source ~/.tristan/shell_scripts/profile.sh
+[[ -s "$HOME/.tristan/shell_scripts/private_scripts.sh" ]] && source "$HOME/.tristan/shell_scripts/private_scripts.sh"
 # Source ~/.profile for secret env variables
 [[ -s "/Users/$USER/.profile" ]] && source "/Users/$USER/.profile"
 

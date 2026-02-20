@@ -4,3 +4,5 @@
 ./vim-snippets/*
 vim/bundle/*
 vim-snippets/*
+shell_scripts/private_scripts.sh
+

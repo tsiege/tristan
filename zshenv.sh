@@ -1,5 +1,6 @@
 # custom commands
 source ~/.tristan/shell_scripts/functions.sh
+[[ -s "$HOME/.tristan/shell_scripts/private_scripts.sh" ]] && source "$HOME/.tristan/shell_scripts/private_scripts.sh"
 # source brew
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
