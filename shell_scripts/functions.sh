@@ -1,20 +1,31 @@
 # Prompt Functions
 #============================
-function git_dirty_status {
-  [[ $(git status 2> /dev/null | tail -n1) == "nothing to commit, working tree clean" ]] && echo "✓"
-  [[ $(git status 2> /dev/null | tail -n1) != "nothing to commit, working tree clean" ]] && echo "✗"
+function git_in_repo {
+  git rev-parse --is-inside-work-tree &>/dev/null
 }
 
 function git_branch_name {
-  git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/\1/"
+  git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null
+}
+
+function git_dirty_status {
+  if [[ -n $(git status --porcelain -uno 2>/dev/null) ]]; then
+    echo "✗"
+  else
+    echo "✓"
+  fi
+}
+
+function git_worktree_tag {
+  local gitdir commondir
+  gitdir=$(git rev-parse --absolute-git-dir 2>/dev/null) || return
+  commondir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return
+  [[ $gitdir != "$commondir" ]] && echo "WT: "
 }
 
 function print_branch_name_and_status {
-  if [[ -d ./.git ]]; then
-    echo "($(git_branch_name) $(git_dirty_status))"
-  else
-    echo ""
-  fi
+  git_in_repo || return
+  echo "($(git_worktree_tag)$(git_branch_name) $(git_dirty_status))"
 }
 
 function prompt {
@@ -132,15 +143,28 @@ function gcom () {
 
 function git_remove_merged_branches() {
   local protected_branches="^(main|master|dev|develop|development|staging|prod|production)$"
+  local current_branch default_branch pr_number
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  default_branch=$(git show-ref --verify --quiet refs/heads/main && echo main || echo master)
 
   for branch in $(git branch --format='%(refname:short)'); do
-    # Skip protected branches
-    if echo "$branch" | grep -qE "$protected_branches"; then
+    # Skip protected branches and the checked-out branch
+    if echo "$branch" | grep -qE "$protected_branches" || [ "$branch" = "$current_branch" ]; then
       continue
     fi
 
-    # Check if branch has a merged PR
-    if gh pr list --state merged --head "$branch" --json number --jq '.[0].number' 2>/dev/null | grep -q .; then
+    # Merged via a real merge commit — no API call needed
+    if git merge-base --is-ancestor "$branch" "$default_branch"; then
+      git branch -D "$branch"
+      continue
+    fi
+
+    # Squash/rebase merges leave no ancestry; ask GitHub for a merged PR
+    if ! pr_number=$(gh pr list --state merged --head "$branch" --json number --jq '.[0].number' 2>&1); then
+      echo "skipping $branch: gh failed: $pr_number" >&2
+      continue
+    fi
+    if [ -n "$pr_number" ]; then
       git branch -D "$branch"
     fi
   done

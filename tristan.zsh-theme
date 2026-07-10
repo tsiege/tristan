@@ -64,16 +64,28 @@ function update_directory() {
 update_directory
 
 # git
+function git_in_repo() {
+    git rev-parse --is-inside-work-tree &>/dev/null
+}
 function git_dirty_status() {
-    [[ $(git status 2> /dev/null | tail -n1) == "nothing to commit, working tree clean" ]] && echo "🌟"
-    [[ $(git status 2> /dev/null | tail -n1) != "nothing to commit, working tree clean" ]] && echo "🔥"
+    if [[ -n $(git status --porcelain -uno 2>/dev/null) ]]; then
+        echo "🔥"
+    else
+        echo "🌟"
+    fi
 }
 function git_branch_name() {
-    git branch --no-color 2> /dev/null | sed -e '/^[^*]/d' -e "s/* \(.*\)/\1/"
+    git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null
+}
+function git_worktree_tag() {
+    local gitdir commondir
+    gitdir=$(git rev-parse --absolute-git-dir 2>/dev/null) || return
+    commondir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return
+    [[ $gitdir != "$commondir" ]] && echo "WT: "
 }
 function git_status() {
-    if [ -d ".git" ]; then
-        echo "$fg_no_bold[blue]git($fg_no_bold[red]$(git_branch_name) $(git_dirty_status)$fg_no_bold[blue])"
+    if git_in_repo; then
+        echo "$fg_no_bold[blue]git($fg_no_bold[red]$(git_worktree_tag)$(git_branch_name) $(git_dirty_status)$fg_no_bold[blue])"
     else
         echo ""
     fi
